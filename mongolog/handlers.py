@@ -47,12 +47,13 @@ class MongoFormatter(logging.Formatter):
         data = record._raw.copy()
 
         data['extra'] = self.prepare_data(data.get('extra'))
-        data['format'] = logging.Formatter.format(self, record)
+
 
         if 'exc_info' in data and data['exc_info']:
             data['exc_info'] = self.formatException(data['exc_info'])
 
-        del data['msg']
+        data['msg'] = logging.Formatter.format(self, record)
+        data['format'] = data['msg']
         del data['args']
 
         # hack for normalize unicode data for soap fault

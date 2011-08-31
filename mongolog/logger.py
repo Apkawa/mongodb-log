@@ -36,9 +36,22 @@ class MongoLogRecord(logging.LogRecord):
         }
 
 
-class MongoLogger(logging.getLoggerClass()):
+_LoggerClass = logging.getLoggerClass()
+class MongoLogger(_LoggerClass):
     def makeRecord(self, *args, **kwargs):
         return MongoLogRecord(*args, **kwargs)
+
+    def _log(self, level, msg, args, **kwargs):
+        exc_info = kwargs.get('exc_info')
+        extra = kwargs.get('extra', {})
+
+        if 'extra' in kwargs:
+            del kwargs['extra']
+        if 'exc_info' in kwargs:
+            del kwargs['exc_info']
+
+        extra.update(kwargs)
+        _LoggerClass._log(self, level, msg, args, exc_info, extra)
 
 
 def _level_to_str(level):

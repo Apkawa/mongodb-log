@@ -13,7 +13,7 @@ You can do this using the following commands in the mongo shell:
         > use mongolog
         > db.createCollection('log', {capped:true, size:100000})
 
-... and you are ready. Running stats() on log collection should 
+... and you are ready. Running stats() on log collection should
 show something like this:
 
         > db.log.stats()
@@ -39,6 +39,41 @@ Usage
 
 Check the samples folder for more details
 
+Or use dictConfig. as example:
+
+    LOGGING = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'handlers': {
+                    'mongodb': {
+                    'level':'DEBUG',
+                    'class': 'mongolog.handlers.MongoHandler',
+                    'db': 'mongolog',
+                    'collection': 'log',
+                    'host': 'localhost',
+                    'port': None,
+                    'formatter': 'mongolog',
+                },
+            },
+            'formatters': {
+                'mongolog': {
+                            '()': 'mongolog.handlers.MongoFormatter',
+                            'format': '%(message)s',
+                    },
+            },
+
+            'loggers': {
+                '': {
+                    'level': 'DEBUG',
+                    'handlers': ['mongodb'],
+                    },
+            },
+        }
+
+    from logging.config import dictConfig
+    dictConfig(LOGGING)
+
+
 Why centralized logging?
 ------------------------
 
@@ -61,9 +96,9 @@ You can read more at http://www.mongodb.org/
 Why MongoDB is great for logging?
 ---------------------------------
 
-- MongoDB inserts can be done asynchronously 
+- MongoDB inserts can be done asynchronously
 - old log data automatically LRU's out thanks to capped collections
-- it's fast enough for the problem 
+- it's fast enough for the problem
 - document-oriented / JSON is a great format for log information
 
 Read more about this subject on the mongoDB blog: http://blog.mongodb.org

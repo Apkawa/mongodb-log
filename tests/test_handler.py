@@ -21,7 +21,7 @@ class TestHandler(unittest.TestCase):
     def tearDown(self):
         """ Drop used database """
         self.conn.drop_database('_mongolog_test')
-        
+
 
     def testLogging(self):
         """ Simple logging example """
@@ -34,14 +34,14 @@ class TestHandler(unittest.TestCase):
 
         r = self.collection.find_one({'level':'debug', 'msg':'test'})
         self.assertEquals(r['msg'], 'test')
-        
+
     def testLoggingException(self):
         """ Logging example with exception """
         log = logging.getLogger('example')
         log.setLevel(logging.DEBUG)
 
         log.addHandler(MongoHandler(self.collection))
-        
+
         try:
             1/0
         except ZeroDivisionError:

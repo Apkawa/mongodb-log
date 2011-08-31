@@ -19,4 +19,8 @@ if __name__ == '__main__':
     log.warn("3 - warn message")
     log.error("4 - error message")
     log.critical("5 - critical message")
+    try:
+        raise Exception("6 - exception message")
+    except Exception:
+        log.exception("6 - exception message")
 

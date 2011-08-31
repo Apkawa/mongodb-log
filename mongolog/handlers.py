@@ -4,6 +4,8 @@ import logging
 from pymongo.connection import Connection
 from pymongo.collection import Collection
 
+from pymongo.errors import AutoReconnect
+
 
 class MongoFormatter(logging.Formatter):
 
@@ -82,6 +84,23 @@ class MongoHandler(logging.Handler):
         """
         return cls(collection=collection, db=db, host=host, port=port, level=level)
 
+
+    def get_collection(self):
+        collection = getattr(self, '__collection', None)
+        if not collection:
+            collection = Connection(self.host, self.port)[self.db][self.collection]
+            self.set_collection(collection)
+        return collection
+
+    def set_collection(self, collection):
+        setattr(self, '__collection', collection)
+
+    def update_conf_from_collection(self, collection):
+        self.collection = collection.name
+        self.db = collection.database.name
+        self.host = collection.database.connection.host
+        self.port = collection.database.connection.port
+
     def __init__(self, collection,
                  db='mongolog',
                  host='localhost', port=None, level=logging.NOTSET):
@@ -90,13 +109,22 @@ class MongoHandler(logging.Handler):
         """
         logging.Handler.__init__(self, level)
         if isinstance(collection, Collection):
-            self.collection = collection
+            self.set_collection(collection)
+            self.update_conf_from_collection(collection)
         else:
-            self.collection = Connection(host, port)[db][collection]
-        self.formatter = MongoFormatter()
+            self.collection = collection
+            self.db = db
+            self.host = host
+            self.port = port
 
+        self.formatter = MongoFormatter()
 
     def emit(self, record):
         """ Store the record to the collection. Async insert """
-        self.collection.save(self.format(record))
+        while True:
+            try:
+                self.get_collection().save(self.format(record))
+                break
+            except AutoReconnect:
+                self.set_collection(None)
 

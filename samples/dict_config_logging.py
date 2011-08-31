@@ -41,7 +41,7 @@ if __name__ == '__main__':
     log = logging.getLogger('example')
 
     log.debug("1 - debug message")
-    log.info("2 - info message", extra={1:2})
+    log.info("2 - info message", extra={'1':2})
     log.warn("3 - warn message")
     log.error("4 - error message")
     log.critical("5 - critical message")

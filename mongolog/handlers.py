@@ -6,6 +6,18 @@ from pymongo.collection import Collection
 
 from pymongo.errors import AutoReconnect
 
+try:
+    from django.views.debug import ExceptionReporter
+    from django.db import models
+    from django.db.models.query import QuerySet
+    from django.utils.datastructures import MergeDict
+    from django.utils.encoding import smart_str
+    DJANGO_ENABLE = True
+except ImportError:
+    DJANGO_ENABLE = False
+
+
+
 
 class MongoFormatter(logging.Formatter):
 
@@ -24,11 +36,7 @@ class MongoFormatter(logging.Formatter):
         if isinstance(data, (int, long, float, basestring)):
             return data
 
-        try:
-            from django.db import models
-            from django.db.models.query import QuerySet
-            from django.utils.datastructures import MergeDict
-            from django.utils.encoding import smart_str
+        if DJANGO_ENABLE:
             if isinstance(data, models.Model):
                 return data.pk
 
@@ -39,10 +47,14 @@ class MongoFormatter(logging.Formatter):
             if isinstance(data, MergeDict):
                 return dict((key, MongoFormatter.prepare_data(value))
                             for key, value in data.iteritems())
-        except ImportError:
+        else:
             smart_str = str
 
         return smart_str(data)
+
+    def formatException(self, exc_info):
+        # TODO: Super format exception
+        return logging.Formatter.formatException(self, exc_info)
 
     def format(self, record):
         """Format exception object as a string"""
@@ -52,6 +64,9 @@ class MongoFormatter(logging.Formatter):
 
 
         if 'exc_info' in data and data['exc_info']:
+            if DJANGO_ENABLE:
+                er = ExceptionReporter(None, *data['exc_info'])
+                data['exc_extra_info'] = self.prepare_data(er.get_traceback_frames())
             data['exc_info'] = self.formatException(data['exc_info'])
 
         data['msg'] = logging.Formatter.format(self, record)

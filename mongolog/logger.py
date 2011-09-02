@@ -72,7 +72,10 @@ def _level_to_str(level):
 
 def _current_user():
     """ Get the name of the os user running this app """
-    import pwd
+    try:
+        import pwd
+    except ImportError:
+        return "(unknown<win32>)"
     import os
     try:
         return pwd.getpwuid(os.getuid()).pw_name

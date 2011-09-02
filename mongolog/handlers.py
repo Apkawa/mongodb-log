@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 import logging
 
 from pymongo.connection import Connection
@@ -29,6 +30,7 @@ class MongoFormatter(logging.Formatter):
             from django.db.models.query import QuerySet
             from django.utils.datastructures import MergeDict
             from django.utils.encoding import smart_str
+
             if isinstance(data, models.Model):
                 return data.pk
 
@@ -121,10 +123,11 @@ class MongoHandler(logging.Handler):
 
     def emit(self, record):
         """ Store the record to the collection. Async insert """
-        while True:
+        for i in xrange(100):
             try:
                 self.get_collection().save(self.format(record))
                 break
             except AutoReconnect:
+                time.sleep(0.1)
                 self.set_collection(None)
 
